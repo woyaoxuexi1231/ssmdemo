@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link type="text/css" rel="stylesheet" href="../layui/css/layui.css">
+    <script type="text/javascript" src="../layui/layui.js"></script>
+</head>
+<body>
+<!--关键字查询-->
+<div class="demoTable" id="search">
+    搜索ID：
+    <div class="layui-inline">
+        <input class="layui-input" name="videoId" id="videoId" autocomplete="off" placeholder="输入ID查询">
+    </div>
+    搜索地址：
+    <div class="layui-inline">
+        <input class="layui-input" name="videoDesc" id="videoDesc" autocomplete="off" placeholder="输入地址查询">
+    </div>
+    时间范围搜索：
+    <div class="layui-inline">
+        <div class="layui-input-inline">
+            <input type="text" class="layui-input" id="createTimeRange" placeholder="选择时间范围">
+        </div>
+    </div>
+    <button class="layui-btn" data-type="reload">搜索</button>
+</div>
+<!--级联查询-->
+<form class="layui-form layui-form-pane" id="jlform" action="">
+    <div class="layui-form-item">
+        <label class="layui-form-label">级联查询</label>
+        <div class="layui-input-inline">
+            <select id="jlformuserId" name="jlformuserId"  lay-filter="jlformuserId">
+                <option value="">请选择用户ID</option>
+            </select>
+        </div>
+        <div class="layui-input-inline">
+            <select id="jlformid" name="jlformid" lay-filter="jlformid">
+                <option value="">请视频ID</option>
+            </select>
+        </div>
+    </div>
+</form>
+<!--数据表格-->
+<table class="layui-hide" id="demo" lay-filter="test">
+    <th lay-data="{fixed: 'right', width:178, align:'center', toolbar: '#barDemo'}"></th>
+</table>
+<!--自定义头部按钮-->
+<script type="text/html" id="barDemoTop">
+    <button type="button" class="layui-btn layui-btn-normal layui-btn-radius" lay-event="add">增加</button>
+    <button type="button" class="layui-btn layui-btn-danger layui-btn-radius" lay-event="delete">删除</button>
+</script>
+<!--行操作按钮-->
+<script type="text/html" id="barDemo">
+    <button data-method="iframe" class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</button>
+    <button class="layui-btn layui-btn-xs" lay-event="edit">编辑</button>
+    <button class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" >删除</button>
+</script>
+<script type="text/javascript">
+    layui.use(['table','laydate'], function() {
+        var table = layui.table //日期
+            , form = layui.form,
+            $ = layui.jquery,
+            layer= layui.layer,
+        laydate = layui.laydate
+        // 得到级联查询select1的值
+        $.ajax({
+            type:'get',
+            url:'../videos/findVideoUserId',
+            dataType:'json',
+            success:function (res) {
+                $.each(res,function (index,value) {
+                    $('#jlformuserId').append('<option value='+value+'>'+value+'</option>')
+                })
+                form.render();
+            }
+        })
+        //执行一个 table 实例
+        var tableIns = table.render({
+            elem: '#demo'
+            , height: 420
+            , url: 'http://localhost:8080/xyh_war/videos/getAll' //数据接口
+            , title: '用户表'
+            , page: true
+            , toolbar: '#barDemoTop' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+            , cols: [
+                [ //表头
+                    {type: 'checkbox', fixed: 'left'}
+                    , {field: 'id', title: 'ID',sort: true, fixed: 'left', totalRowText: '合计：'}
+                    , {field: 'video_path', title: '视频地址', width: 200}
+                    , {field: 'video_desc', title: '描述', width: 150,edit:'text'}
+                    , {field: 'like_counts', title: '点赞数', width: 100,edit:'text'}
+                    , {field: 'status', title: '状态', width: 200, templet: function (res) {
+
+                        if (res.status == 1) {
+                            return '<input type="checkbox" name="status" value=' + res.id + ' lay-skin="switch" lay-filter="statusFilter" lay-text="已发布|未发布" checked>'
+                        }
+                        if (res.status == 0) {
+                            return '<input type="checkbox" name="status" value=' + res.id + ' lay-skin="switch" lay-filter="statusFilter" lay-text="已发布|未发布">'
+                        }
+                        return null;
+                    }}
+                    , {field: 'create_time', title: '创建时间',width: 200}
+                    ,{fixed: 'right',width: 165,align: 'center',toolbar: '#barDemo' }
+
+                ]
+            ],
+
+        });
+        //级联查询select1
+        form.on('select(jlformuserId)',function (data) {
+            // 点击之后更新表格内容
+            tableIns.reload({
+                url: '../videos/findVideoByUserId',
+                where: {
+                    "userId": data.value
+                },
+                page: {
+                    curr: 1,
+                },
+            })
+            // 更新select2的值
+            $.ajax({
+                type: 'post',
+                url: '../videos/findVideoIdByUserId?userId=' + data.value,
+                dataType: 'json',
+                success: function (res) {
+                    $('#jlformid').empty();
+                    $('#jlformid').append('<option>请选择视频ID</option>');
+                    $.each(res, function (index, value) {
+                        $('#jlformid').append('<option value=' + value + '>' + value + '</option>')
+                    })
+                    form.render();
+                }
+            });
+        });
+        //级联查询select2
+        form.on('select(jlformid)',function (data) {
+            tableIns.reload({
+                url: '../videos/findVideoByUserIdAndId',
+                where: {
+                    "id": data.value
+                },
+                page: {
+                    curr: 1,
+                },
+            })
+        })
+        // 监听头工具栏
+        table.on('toolbar(test)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id)
+            ,data = checkStatus.data;
+            switch(obj.event){
+                case 'add':
+                    layer.open({
+                        type: 2,
+                        title: 'layer mobile页',
+                        shadeClose: true,
+                        shade: 0.8,
+                        area: ['380px', '90%'],
+                        // 前端访问的content
+                        // content: 'formdemo.html', //iframe的url
+                        //走后台的访问content
+                        content:'../home/upload',
+                        success: function(layero, index) {
+                            var body = layer.getChildFrame('body', index);
+                            var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                        },
+                    });
+                    break;
+                case 'delete':
+                    if(data.length ===0){
+                        break;
+                    }else{
+                        var ids = new Array();
+                        for(var i in data){
+                            ids[i]=data[i].id;
+                        }
+                        $.ajax({
+                            type:'post',
+                            url:'../videos/delete',
+                            data:{"ids":ids},
+                            //告诉后台接受的数据是一个数组
+                            traditional:true,
+                            dataType: 'json',
+                            success:function (res) {
+                                console.log(res)
+                                layer.msg(res.msg,{
+                                    icon:1
+                                },function () {
+                                    //更新表格
+                                    tableIns.reload();
+                                });
+                            }
+
+                        })
+                        break;
+                    }
+                case 'update':
+                    layer.msg('编辑');
+                    break;
+            };
+        });
+        // 监听行工具条
+        table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+            if(layEvent === 'detail'){ //查看
+                //do somehing
+                //拿数据加载页面
+                $.ajax({
+                    type:'post',
+                    url:'../videos/findVideoById?id='+data.id,
+                    dataType:'json',
+                    success:function (res) {
+                        console.log(res);
+                        //这里加载目标页面
+                        layer.open({
+                            type: 2,
+                            title: 'layer mobile页',
+                            shadeClose: true,
+                            shade: 0.8,
+                            area: ['380px', '90%'],
+                            // 前端访问的content
+                            // content: 'formdemo.html', //iframe的url
+                            //走后台的访问content
+                            content:'../home/formdemo',
+                            //还要考虑数据的渲染
+                            success: function(layero, index) {
+                                var body = layer.getChildFrame('body', index);
+                                var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                                body.find('#id').val(res.id);
+                                body.find('#userId').val(res.userId);
+                                body.find('#videoDesc').val(res.videoDesc);
+                                body.find('#videoDesc').attr("disabled","disabled");
+                                body.find('#videoPath').val(res.videoPath);
+                                body.find('#likeCounts').val(res.likeCounts);
+                                body.find('#createTime').val(res.createTime);
+                                if(res.status == 1) {
+                                    body.find('#status').attr("checked", "checked");
+                                }
+                                body.find('#status').attr("disabled","disabled");
+                                body.find('#submit').attr("class","layui-btn layui-btn-disabled");
+                                body.find('#submit').attr("disabled","disabled");
+                                //以下对switch的赋值操作错误
+                                // if (res.status == 1) {
+                                //     body.find('#status').checked(true);
+                                // }
+                                // if (res.status == 0) {
+                                //     body.find('#status').checked(false);
+                                // }
+                            }
+                        });
+                    }
+                })
+            } else if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除行么', function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    $.ajax({
+                        type:'post',
+                        url:'../videos/deleteById?id='+data.id,
+                        dataType:'json',
+                        success:function (res) {
+                            layer.msg(res.msg,{
+                                icon:1
+                            },function () {
+                                //更新表格
+                                tableIns.reload();
+                            });
+                        }
+                    })
+                });
+            } else if(layEvent === 'edit'){ //编辑
+                //同步更新缓存对应的值
+                obj.update({
+                    username: '123'
+                    ,title: 'xxx'
+                });
+            } else if(layEvent === 'LAYTABLE_TIPS'){
+                layer.alert('Hi，头部工具栏扩展的右侧图标。');
+            }
+        });
+        //发布状态的更改
+        form.on('switch(statusFilter)', function (obj) {
+            // console.log(obj.elem.checked)
+            // console.log(obj.elem.value)
+            var sta;
+            if (obj.elem.checked == false) {
+                console.log(false)
+                sta = 0
+            }
+            ;
+            if (obj.elem.checked == true) {
+                console.log(true)
+                sta = 1
+            }
+            ;
+            $.ajax({
+                type: 'post',
+                url: '/xyh_war/videos/update',
+                data: {
+                    "value": sta,
+                    "id": obj.elem.value,
+                    "field":'status',
+                },
+                dataType: 'json',
+                success: function (res) {
+                    layer.msg(res.msg,{})
+                }
+            })
+        });
+        //监听单元格编辑
+        table.on('edit(test)', function(obj){
+            var value = obj.value //得到修改后的值
+                ,data = obj.data //得到所在行所有键值
+                ,field = obj.field; //得到字段
+            $.ajax({
+                type:'post',
+                url:'../videos/update',
+                data:{
+                    "value": value,
+                    "id": data.id,
+                    "field":obj.field,
+                },
+                dataType: 'json',
+                success:function (res) {
+                    console.log(res)
+                    layer.msg(res.msg,{
+                        icon:1
+                    },function () {
+                        //更新表格
+                        tableIns.reload();
+                    });
+                }
+            })
+        });
+        // //查看详情iframe弹出层
+        // var active = {
+        //     iframe:function (){
+        //         layer.open({
+        //             type: 2,
+        //             content: 'formdemo.html',
+        //             success: function(layero, index){
+        //                 var body = layer.getChildFrame('body', index);
+        //                 var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+        //                 console.log(body.html()) //得到iframe页的body内容
+        //             }
+        //         });
+        //     }
+        // };
+        //关键字查询
+        //关键词搜索
+        $("#search .layui-btn").on('click',function () {
+            tableIns.reload({
+                url:'../videos/selectByLike',
+                where:{
+                    "id":$('#videoId').val(),
+                    "videoDesc":$('#videoDesc').val(),
+                    "createTimeRange":$('#createTimeRange').val(),
+                },
+                page: {
+                    curr: 1,
+                }
+            })
+        })
+        //时间范围选择器
+        laydate.render({
+            elem: '#createTimeRange'
+            ,type: 'datetime'
+            ,range: true //或 range: '~' 来自定义分割字符
+        });
+        $('#layerDemo .layui-btn').on('click', function(){
+            var othis = $(this), method = othis.data('method');
+            active[method] ? active[method].call(this, othis) : '';
+        });
+        $('#barDemo .layui-btn').on('click', function(){
+            var othis = $(this), method = othis.data('method');
+            active[method] ? active[method].call(this, othis) : '';
+        });
+
+    });
+</script>
+</body>
+</html>

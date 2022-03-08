@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link type="text/css" rel="stylesheet" href="../layui/css/layui.css">
+
+</head>
+<body>
+
+<form class="layui-form" action="" lay-filter="example">
+
+    <!--视频ID-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">ID</label>
+        <div class="layui-input-block">
+            <input disabled type="text" id="id" name="id" lay-verify="id" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <!--用户ID-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">用户ID</label>
+        <div class="layui-input-block">
+            <input disabled type="text" id="userId" name="userId" lay-verify="userId" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <!--发布时间-->
+    <div class="layui-form">
+        <div class="layui-form-item">
+            <div class="layui-inline">
+                <label class="layui-form-label">发布时间</label>
+                <div class="layui-input-inline">
+                    <input disabled type="text" name="createTime" lay-verify="createTime" class="layui-input" id="createTime" placeholder="yyyy-MM-dd HH:mm:ss">
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--视频地址-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">视频地址</label>
+        <div class="layui-input-block">
+            <input disabled type="text" id="videoPath" lay-verify="videoPath" name="videoPath" placeholder="视频地址" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+   <!--点赞数-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">点赞数</label>
+        <div class="layui-input-inline">
+            <input disabled type="text" lay-verify="likeCounts" id="likeCounts" name="likeCounts" placeholder="点赞数" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+    <!--是否发布-->
+    <div class="layui-form-item">
+        <label class="layui-form-label">是否发布</label>
+        <div class="layui-input-block">
+            <input id="status" type="checkbox" name="status" lay-skin="switch" lay-text="已发布|未发布">
+        </div>
+    </div>
+    <!--视频描述-->
+    <div class="layui-form-item layui-form-text">
+        <label class="layui-form-label">视频描述</label>
+        <div class="layui-input-block">
+            <textarea lay-verify="videoDesc" id="videoDesc" placeholder="请输入内容" class="layui-textarea" name="videoDesc"></textarea>
+        </div>
+    </div>
+</form>
+
+</body>
+<script type="text/javascript" src="../layui/layui.js"></script>
+<script>
+    layui.use(['laydate','form','upload'] ,function(){
+        var laydate = layui.laydate,
+            form = layui.form,
+        $ = layui.jquery,
+            upload = layui.upload
+
+        //日期时间选择器
+        laydate.render({
+            elem: '#createTime'
+            ,type: 'datetime'
+        });
+
+
+    });
+
+</script>
+</html>

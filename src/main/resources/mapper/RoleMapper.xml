@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="team.xyh.video.dao.RoleMapper" >
+  <resultMap id="BaseResultMap" type="team.xyh.video.pojo.Role" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="CHAR" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from role
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="team.xyh.video.pojo.Role" >
+    insert into role (id, type)
+    values (#{id,jdbcType=INTEGER}, #{type,jdbcType=CHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="team.xyh.video.pojo.Role" >
+    update role
+    set type = #{type,jdbcType=CHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select id, type
+    from role
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap" >
+    select id, type
+    from role
+  </select>
+</mapper>
